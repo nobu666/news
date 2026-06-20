@@ -22,6 +22,7 @@ description: AI・SWE・EM関連の最新ニュースを収集し、Obsidian Vau
 ## 収集ソース
 
 以下のソースからバランスよく収集すること:
+- tenki.jp、気象庁等（天気予報用）
 - Hacker News（トップ記事）
 - TechCrunch
 - The Verge
@@ -50,6 +51,12 @@ description: AI・SWE・EM関連の最新ニュースを収集し、Obsidian Vau
 フォーマット:
 ```
 # ニュースまとめ YYYY/MM/DD 朝刊
+
+## 東京の天気
+
+今日: 天気 / 最高XX度 最低XX度 / 降水確率XX%
+明日: 天気 / 最高XX度 最低XX度
+ひとこと: 傘が必要か、服装のアドバイスなど一言。
 
 ## AI / 機械学習
 
