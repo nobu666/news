@@ -6,12 +6,14 @@ AI・ソフトウェアエンジニアリング・エンジニアリングマネ
 
 ## 構成
 
-| タスク | 出力ファイル | 用途 |
-|---|---|---|
-| [`tech-news-morning`](tech-news-morning/SKILL.md) | `YYYY-MM-DD-morning.md` | 朝刊 |
-| [`tech-news-evening`](tech-news-evening/SKILL.md) | `YYYY-MM-DD-evening.md` | 夕刊 |
+[`daily-news`](daily-news/SKILL.md) という単一タスク。1日2回（朝・夕）実行され、**実行時刻で朝刊/夕刊を出し分ける**（12時より前なら朝刊、以降なら夕刊）。
 
-morning / evening は見出し（朝刊 / 夕刊）と出力ファイル名以外は同一仕様。収集カテゴリ・ソース・フォーマットは両者で揃えている。
+| 版 | 出力ファイル | 判定 |
+|---|---|---|
+| 朝刊 | `YYYY-MM-DD-morning.md` | 実行時刻が 12 時より前 |
+| 夕刊 | `YYYY-MM-DD-evening.md` | 実行時刻が 12 時以降 |
+
+cron は `0 8,18 * * *` のように1タスクで朝夕2回発火させる。
 
 ## 収集カテゴリ
 
@@ -35,12 +37,12 @@ cd ~/repos/news
 ./install.sh
 ```
 
-`install.sh` は各 SKILL.md を `~/.claude/scheduled-tasks/<task>/SKILL.md` に **シンボリックリンク**する。リポジトリ側を編集すれば、次回の scheduled task 実行にそのまま反映される。
+`install.sh` は SKILL.md を `~/.claude/scheduled-tasks/daily-news/SKILL.md` に **シンボリックリンク**する。リポジトリ側を編集すれば、次回の scheduled task 実行にそのまま反映される。
 
 ## 編集方針
 
 - リンクは実在する**個別記事の URL**を貼る（月次インデックスやニュース一覧ページは不可）
-- カテゴリ・ソースを追加したいときは morning / evening 両方の SKILL.md を揃えて更新する
+- 仕様は `daily-news/SKILL.md` 一箇所に集約。朝刊/夕刊で内容を変えたい場合のみ「朝刊／夕刊の判定」セクションを起点に分岐させる
 
 ## ライセンス
 

@@ -4,7 +4,7 @@ set -e
 REPO_DIR="${INSTALL_DIR:-$HOME/repos}/news"
 TASKS_DIR="$HOME/.claude/scheduled-tasks"
 
-echo "=== news (tech-news scheduled tasks) インストール ==="
+echo "=== news (daily-news scheduled task) インストール ==="
 
 # リポジトリ
 echo ""
@@ -22,13 +22,14 @@ fi
 echo ""
 echo "--- シンボリックリンク ---"
 mkdir -p "$TASKS_DIR"
-for task in tech-news-morning tech-news-evening; do
-  mkdir -p "$TASKS_DIR/$task"
-  ln -sf "$REPO_DIR/$task/SKILL.md" "$TASKS_DIR/$task/SKILL.md"
-  echo "  $TASKS_DIR/$task/SKILL.md -> $REPO_DIR/$task/SKILL.md"
-done
+task=daily-news
+mkdir -p "$TASKS_DIR/$task"
+ln -sf "$REPO_DIR/$task/SKILL.md" "$TASKS_DIR/$task/SKILL.md"
+echo "  $TASKS_DIR/$task/SKILL.md -> $REPO_DIR/$task/SKILL.md"
 
 echo ""
 echo "=== 完了 ==="
-echo "scheduled-tasks に morning / evening を symlink しました。"
+echo "scheduled-tasks に daily-news を symlink しました。"
+echo "1日2回（朝・夕）実行され、実行時刻で朝刊/夕刊を出し分けます。"
+echo "cron 例: 0 8,18 * * *"
 echo "リポジトリ側の SKILL.md を編集すると、そのまま反映されます。"
