@@ -51,7 +51,7 @@ description: AI・SWE・EMから時事・スポーツ・ゲーム・グルメ・
 ## 出力
 
 ディレクトリ: ~/Documents/Obsidian/Vault/News/
-（存在しなければ作成する。`mkdir -p` は単体で実行し、`&& echo` 等でコマンドを連結しない——無人実行で権限ダイアログ待ちになるため）
+（保存は必ず **Write ツール**で行う。Write は親ディレクトリを自動作成するので、`mkdir` 等の Bash コマンドは一切実行しないこと。無人実行では権限ダイアログで止まるため、ファイル作成のために Bash を使ってはいけない）
 
 ファイル名: 当日の日付で、朝刊なら `YYYY-MM-DD-morning.md`、夕刊なら `YYYY-MM-DD-evening.md`
 
