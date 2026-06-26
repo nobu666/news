@@ -1,0 +1,25 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: 構文チェック（全スクリプト）
+        run: python -m py_compile daily-news/gmail/fetch.py daily-news/gmail/auth.py
+      - name: ユニットテスト
+        run: python -m unittest discover -s daily-news/gmail -p 'test_*.py' -v
