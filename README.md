@@ -1,80 +1,84 @@
 # news
 
-毎日のニュースを Web 検索で収集して日本語要約にまとめ、朝刊では任意で Gmail の未読から「対応が必要そうなもの」を拾う Claude Code の scheduled task 一式。
+A set of Claude Code scheduled tasks that collect the latest news via web search, summarize it, and (optionally, in the morning) surface Gmail unread mail that "needs action".
 
-**個人設定（出力先・カテゴリ・天気・ブログの性格など）はすべて `~/.config/news/env`（`.env` 形式・リポジトリ外）に置く。** クローンした人は自分の env を書くだけで使える。タスク本体（`SKILL.md`）には個人情報を書かない設計。
+**All personal settings — output paths, categories, language, your blog's character — live in `~/.config/news/env` (`.env` style, outside the repo).** Anyone who clones this just writes their own env. The task bodies (`SKILL.md`) contain no personal data.
 
-## 構成
+## Layout
 
-**既定では「ニュース収集」だけが動く。** Gmail 要対応メールと blog-idea-scout は、明示的に有効化したときだけ動く任意の追加機能。
+**Out of the box only "news collection" runs.** Gmail "needs action" mail and blog-idea-scout are optional add-ons that only run when explicitly enabled.
 
-| タスク | 区分 | 頻度 | 内容 | 出力 |
+| Task | Tier | Cadence | What it does | Output |
 |---|---|---|---|---|
-| [`daily-news`](daily-news/SKILL.md) | コア | 1日2回（朝・夕） | 設定カテゴリのニュース収集 | `$NEWS_DIR/YYYY-MM-DD-{morning,evening}.md` |
-| └ Gmail 要対応メール | 任意 | 朝刊のみ | `GMAIL_ENABLED=1` のとき未読から要対応を抽出 | 朝刊内のセクション |
-| [`blog-idea-scout`](blog-idea-scout/SKILL.md) | 任意 | 週1 | ニュース蓄積×自分のメモからブログネタ提案 | `$BLOG_IDEA_FILE` |
+| [`daily-news`](daily-news/SKILL.md) | core | twice a day | collect news for your configured categories | `$NEWS_DIR/YYYY-MM-DD-{morning,evening}.md` |
+| └ Gmail needs-action mail | optional | morning only | when `GMAIL_ENABLED=1`, extract action-needing unread mail | a section in the morning digest |
+| [`blog-idea-scout`](blog-idea-scout/SKILL.md) | optional | weekly | suggest blog ideas from accumulated news x your notes | `$BLOG_IDEA_FILE` |
 
-daily-news は**実行時刻で朝刊/夕刊を出し分ける**（12時より前なら朝刊、以降なら夕刊）。cron は `0 8,18 * * *` のように1タスクで朝夕2回発火させる。
+daily-news **splits editions by run time** (before 12:00 -> morning, otherwise -> evening). Use one cron firing twice a day, e.g. `0 8,18 * * *`.
 
-## クイックスタート
+## Quick start
 
 ```bash
 git clone https://github.com/nobu666/news.git ~/repos/news
 cd ~/repos/news
-./install.sh                 # daily-news（ニュース）だけを symlink ＋ ~/.config/news/env を雛形から作成
-$EDITOR ~/.config/news/env   # 自分用に編集（下表）
+./install.sh                 # symlinks daily-news (news) + seeds ~/.config/news/env from the template
+$EDITOR ~/.config/news/env   # edit for yourself (see table below)
 ```
 
-これだけでニュース収集が動く。追加機能は任意:
-- **blog-idea-scout も使う**: `./install.sh --with-blog-idea-scout`
-- **Gmail 要対応メールも使う**: `~/.config/news/env` で `GMAIL_ENABLED=1` ＋ [`daily-news/gmail/SETUP.md`](daily-news/gmail/SETUP.md)
+That alone gets news collection going. The add-ons are optional:
+- **Also use blog-idea-scout**: `./install.sh --with-blog-idea-scout`
+- **Also use Gmail needs-action mail**: set `GMAIL_ENABLED=1` in `~/.config/news/env` and see [`daily-news/gmail/SETUP.md`](daily-news/gmail/SETUP.md)
 
-`install.sh` がやること:
-- `daily-news`（と `--with-blog-idea-scout` 指定時は blog-idea-scout）の `SKILL.md` を `~/.claude/scheduled-tasks/<task>/SKILL.md` に **symlink**（リポを編集すれば次回実行に即反映）
-- `~/.config/news/env` が無ければ [`.env.example`](.env.example) からコピー
+What `install.sh` does:
+- symlinks `daily-news` (and blog-idea-scout when `--with-blog-idea-scout` is given) `SKILL.md` into `~/.claude/scheduled-tasks/<task>/SKILL.md` (editing the repo is reflected on the next run)
+- copies [`.env.example`](.env.example) to `~/.config/news/env` if missing
 
-cron 登録自体はアプリの scheduled-task 機能で別途行う（install.sh は symlink と設定雛形のみ）。
+Registering the cron itself is done separately via your app's scheduled-task feature (this script only symlinks and seeds the config).
 
-## 設定（`~/.config/news/env`）
+## Config (`~/.config/news/env`)
 
-`.env` 形式・**リポジトリ外**。無いキーは既定値。パス先頭の `~` はホームに展開。
+`.env` style, **outside the repo**. Missing keys fall back to defaults. A leading `~` in a path expands to home.
 
-| キー | 用途 |
+| Key | Purpose |
 |---|---|
-| `NEWS_DIR` | daily-news の出力先（blog-idea-scout の入力でもある） |
-| `BLOG_IDEA_FILE` | blog-idea-scout の提案出力先 |
-| `BACKLOG_FILE` | （任意）既存ネタ在庫。あれば重複判定に使う |
-| `VAULT_SEARCH` | （任意）過去メモ検索コマンドのパス。あれば関連メモ掘りに使う |
-| `WEATHER_LOCATION` | 天気の対象地域。空なら天気セクション省略 |
-| `NEWS_CATEGORIES` | 収集カテゴリ。`;` 区切り、各項目 `名前: 補足` 可 |
-| `NEWS_SOURCES` | （任意）優先ソース。`;` 区切り。空ならエージェントが選ぶ |
-| `BLOG_PROFILE` | ブログの性格と「良いネタ」の判断基準を一言で |
-| `GMAIL_ENABLED` | `1` で朝刊の要対応メールを有効化（既定 `0`） |
-| `GMAIL_QUERY` / `GMAIL_MAX` | 要対応メール抽出の Gmail 検索クエリ・最大件数 |
+| `NEWS_DIR` | daily-news output dir (also blog-idea-scout's input) |
+| `OUTPUT_LANGUAGE` | language to write the digest/suggestions in (default: English) |
+| `WEATHER_LOCATION` | weather location; empty omits the weather section |
+| `NEWS_CATEGORIES` | categories, `;`-separated, each item may be `name: hint` |
+| `NEWS_SOURCES` | (optional) preferred sources, `;`-separated; empty = the agent picks |
+| `BLOG_IDEA_FILE` | blog-idea-scout's suggestion output |
+| `BLOG_PROFILE` | your blog's character and what makes a good idea, in one line |
+| `BACKLOG_FILE` | (optional) existing idea backlog, used for dedup |
+| `VAULT_SEARCH` | (optional) path to a past-notes search command |
+| `GMAIL_ENABLED` | `1` enables morning needs-action mail (default `0`) |
+| `GMAIL_QUERY` / `GMAIL_MAX` | Gmail search query and max count for needs-action mail |
 
-## Gmail 要対応メール（任意）
+## Gmail needs-action mail (optional)
 
-`GMAIL_ENABLED=1` のとき、朝刊で未読から「返信・対応・期限がありそうなもの」を拾う。**読み取り専用**（`gmail.readonly`）で、既読化も返信もしない。差出人・件名・スニペットだけを見て本文全体は取らない。
+When `GMAIL_ENABLED=1`, the morning digest pulls unread mail that likely "needs a reply/action". It is **read-only** (`gmail.readonly`) — never marks as read or replies. It only reads From / Subject / snippet, never the full body.
 
-セットアップは [`daily-news/gmail/SETUP.md`](daily-news/gmail/SETUP.md) 参照（Gmail API の OAuth クライアント作成 → 一度だけ同意 → トークン保存）。認証情報は `~/.config/news-gmail/` に置き、**このリポジトリには絶対に入れない**。
+Setup: see [`daily-news/gmail/SETUP.md`](daily-news/gmail/SETUP.md) (create a Gmail API OAuth client -> consent once -> save the token). Credentials live in `~/.config/news-gmail/` and **must never be committed**.
 
-無人実行で `fetch.py` を権限ダイアログ無しに走らせるには、`~/.claude/settings.json` の `permissions.allow` に次を加える（クローン先が違えばパスを読み替え）:
+To let `fetch.py` run unattended without a permission dialog, add this to `permissions.allow` in `~/.claude/settings.json` (adjust the path if you cloned elsewhere):
 
 ```
 "Bash(python3 ~/repos/news/daily-news/gmail/fetch.py)"
 ```
 
-## セキュリティ上の注意
+## Security notes
 
-- **scheduled task は無人で自律実行される。** `install.sh` の `git pull` で上流が変わると、無人エージェントの指示（SKILL.md）もそのまま変わる。**pull 後は SKILL.md の差分を、無人実行前に確認する**こと。
-- ニュースやメールは**攻撃者が中身を選べる untrusted データ**として扱う設計（各 SKILL.md 冒頭の「取り扱い注意」参照）。本文中の命令や URL 誘導には従わせない。
-- 秘密情報（Gmail 認証情報・トークン）は `~/.config/` 配下に隔離し、リポジトリには置かない。`.gitignore` でも二重に弾く。
+- **Scheduled tasks run unattended and autonomously.** If `install.sh`'s `git pull` changes upstream, the unattended agent's instructions (SKILL.md) change too. **Review the SKILL.md diff before the next unattended run.**
+- News and mail are treated as **attacker-chosen untrusted data** by design (see "Read first" at the top of each SKILL.md). Their embedded commands and URL lures are not obeyed.
+- Secrets (Gmail credentials/token) live under `~/.config/` and are never in the repo; `.gitignore` blocks them too.
 
-## 編集方針
+## Development
 
-- 個人の値は `~/.config/news/env` に。`SKILL.md` には個人情報・固有のパスを書かない
-- リンクは実在する**個別記事の URL**を貼る（月次インデックスやニュース一覧ページは不可）
+```bash
+python -m unittest discover -s daily-news/gmail -p 'test_*.py'   # dependency-free tests
+```
 
-## ライセンス
+CI runs these on every push/PR. The scripts use the standard library only (no dependencies).
+
+## License
 
 [MIT](LICENSE)

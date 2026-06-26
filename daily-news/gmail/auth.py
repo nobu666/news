@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""一度だけ実行: ブラウザで Gmail 読み取り専用の同意を取り、token.json を保存する。
+"""Run once: get read-only Gmail consent in the browser and save token.json.
 
-依存なし。事前に GMAIL_CONFIG_DIR（既定 ~/.config/news-gmail）に
-credentials.json {"client_id": "...", "client_secret": "..."} を置いておくこと。
-OAuth クライアントは Google Cloud Console で「デスクトップ アプリ」種別で作る
-（ループバック http://127.0.0.1 へのリダイレクトが許可されるため登録不要）。
+No dependencies. Put credentials.json {"client_id": "...", "client_secret": "..."}
+into GMAIL_CONFIG_DIR (default ~/.config/news-gmail) first. Create the OAuth client
+as a "Desktop app" in Google Cloud Console (loopback http://127.0.0.1 redirects are
+allowed for that type, so no redirect URI registration is needed).
 """
 import base64
 import hashlib
@@ -37,14 +37,14 @@ class _Handler(http.server.BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.end_headers()
-        self.wfile.write("認証が完了しました。ターミナルに戻ってください。".encode())
+        self.wfile.write("Authentication complete. You can return to the terminal.".encode())
 
-    def log_message(self, *a):  # サーバログを黙らせる
+    def log_message(self, *a):  # silence the server log
         pass
 
 
 def _harden_perms():
-    """秘密ディレクトリ/ファイルのパーミッションを防御的に絞る（冪等）。"""
+    """Defensively tighten permissions on the secret dir/files (idempotent)."""
     try:
         CONFIG_DIR.chmod(0o700)
         for f in ("credentials.json", "token.json"):
@@ -58,13 +58,13 @@ def _harden_perms():
 def load_creds():
     _harden_perms()
     raw = json.loads((CONFIG_DIR / "credentials.json").read_text())
-    c = raw.get("installed") or raw.get("web") or raw  # Google DL形式({"installed":..})と素の形式の両対応
+    c = raw.get("installed") or raw.get("web") or raw  # accept Google's download form ({"installed":..}) and a flat form
     return {"client_id": c["client_id"], "client_secret": c["client_secret"]}
 
 
 def main():
     creds = load_creds()
-    # PKCE（S256）と state で認可コード注入/CSRF を防ぐ
+    # PKCE (S256) + state to prevent authorization-code injection / CSRF
     verifier = secrets.token_urlsafe(64)
     challenge = base64.urlsafe_b64encode(
         hashlib.sha256(verifier.encode()).digest()
@@ -83,20 +83,20 @@ def main():
     })
     url = f"{AUTH_URL}?{params}"
     httpd = http.server.HTTPServer(("127.0.0.1", PORT), _Handler)
-    httpd.timeout = 180  # リダイレクトが来なければ諦める（ハング防止）
-    print("ブラウザで同意してください。開かない場合は次のURLを手動で開く:\n" + url + "\n")
+    httpd.timeout = 180  # give up if no redirect arrives (avoid hanging)
+    print("Consent in the browser. If it does not open, visit this URL manually:\n" + url + "\n")
     webbrowser.open(url)
-    httpd.handle_request()  # リダイレクト1回だけ受ける
+    httpd.handle_request()  # receive the single redirect
 
     if _received.get("error"):
-        print(f"認証エラー: {_received['error']}", file=sys.stderr)
+        print(f"Auth error: {_received['error']}", file=sys.stderr)
         sys.exit(1)
     if _received.get("state") != state:
-        print("state 不一致。認可コード注入の疑いがあるため中止します。", file=sys.stderr)
+        print("State mismatch. Aborting (possible authorization-code injection).", file=sys.stderr)
         sys.exit(1)
     code = _received.get("code")
     if not code:
-        print("認証コードを取得できませんでした（タイムアウトの可能性）。", file=sys.stderr)
+        print("Could not obtain an authorization code (possibly timed out).", file=sys.stderr)
         sys.exit(1)
 
     body = urllib.parse.urlencode({
@@ -112,13 +112,13 @@ def main():
         tok = json.load(r)
 
     if "refresh_token" not in tok:
-        print("refresh_token が返りませんでした。Google アカウントのアクセス権を一度解除してから再実行してください。", file=sys.stderr)
+        print("No refresh_token returned. Revoke this app's access in your Google account and re-run.", file=sys.stderr)
         sys.exit(1)
 
     out = CONFIG_DIR / "token.json"
     out.write_text(json.dumps(tok, ensure_ascii=False, indent=2))
     out.chmod(0o600)
-    print(f"保存しました: {out}")
+    print(f"Saved: {out}")
 
 
 if __name__ == "__main__":

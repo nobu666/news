@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""fetch.py の依存なしロジックの最小テスト（標準ライブラリの unittest のみ）。
+"""Minimal tests for the dependency-free logic in fetch.py (stdlib unittest only).
 
-ネットワークを使う部分（Gmail API）はテストしない。壊れたら困る純ロジック:
-  - _load_env_file: .env パース（コメント/空行スキップ・値中の `=`・既存env優先）
-  - load_creds: Google DL形式 {installed} / {web} / フラット の3形の吸収
-  - _harden_perms: 秘密の 0700/0600 強制
-  - GMAIL_ENABLED ゲート: 0 のとき [] を返し終了（ネット未使用）
+The network parts (Gmail API) are not tested. The pure logic that must not break:
+  - _load_env_file: .env parsing (skip comments/blanks, `=` inside values, existing env wins)
+  - load_creds: absorb Google's {installed} / {web} / flat credential shapes
+  - _harden_perms: force 0700/0600 on secrets
+  - GMAIL_ENABLED gate: when 0, print [] and exit without touching the network
 """
 import importlib.util
 import json
@@ -17,7 +17,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-# import 時の _load_env_file が実ファイルを読まないよう NEWS_ENV を無効化してから読み込む
+# Disable NEWS_ENV before import so _load_env_file does not read a real file
 os.environ["NEWS_ENV"] = os.devnull
 _spec = importlib.util.spec_from_file_location("fetch", Path(__file__).with_name("fetch.py"))
 fetch = importlib.util.module_from_spec(_spec)
@@ -47,17 +47,17 @@ class LoadEnvFile(unittest.TestCase):
         os.environ.pop("FOO", None)
         self._load("# comment\n\nNEWS_DIR=/tmp/news\nFOO = bar \n")
         self.assertEqual(os.environ["NEWS_DIR"], "/tmp/news")
-        self.assertEqual(os.environ["FOO"], "bar")  # 前後空白は除去
+        self.assertEqual(os.environ["FOO"], "bar")  # surrounding whitespace stripped
 
     def test_value_may_contain_equals(self):
         os.environ.pop("Q", None)
         self._load("Q=a=b=c\n")
-        self.assertEqual(os.environ["Q"], "a=b=c")  # 最初の = だけで分割
+        self.assertEqual(os.environ["Q"], "a=b=c")  # split on the first = only
 
     def test_existing_env_wins(self):
         os.environ["NEWS_DIR"] = "/already"
         self._load("NEWS_DIR=/from-file\n")
-        self.assertEqual(os.environ["NEWS_DIR"], "/already")  # setdefault: 既存が勝つ
+        self.assertEqual(os.environ["NEWS_DIR"], "/already")  # setdefault: existing value wins
 
 
 class LoadCreds(unittest.TestCase):
@@ -106,7 +106,7 @@ class HardenPerms(unittest.TestCase):
 
 class GmailGate(unittest.TestCase):
     def test_disabled_outputs_empty_no_network(self):
-        # GMAIL_ENABLED=0 なら、ネットに触れず [] を出して正常終了する
+        # With GMAIL_ENABLED=0 it must print [] and exit cleanly, without touching the network
         env = dict(os.environ, GMAIL_ENABLED="0", NEWS_ENV=os.devnull)
         r = subprocess.run(
             [sys.executable, str(Path(__file__).with_name("fetch.py"))],

@@ -19,7 +19,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - name: 構文チェック（全スクリプト）
+      - name: Syntax check (all scripts)
         run: python -m py_compile daily-news/gmail/fetch.py daily-news/gmail/auth.py
-      - name: ユニットテスト
+      - name: Unit tests
         run: python -m unittest discover -s daily-news/gmail -p 'test_*.py' -v
