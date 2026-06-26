@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-"""Gmail の未読から「要対応かもしれない」候補を JSON で出す（読み取り専用）。
+"""Print unread Gmail messages that may need a reply/action, as JSON (read-only).
 
-依存なし（標準ライブラリのみ）。認証情報は GMAIL_CONFIG_DIR（既定 ~/.config/news-gmail）に置く:
-  credentials.json : {"client_id": "...", "client_secret": "..."}   ← 手動で作成
-  token.json       : auth.py が生成（refresh_token を含む）
+No dependencies (standard library only). Credentials live in GMAIL_CONFIG_DIR
+(default ~/.config/news-gmail):
+  credentials.json : {"client_id": "...", "client_secret": "..."}   <- create by hand
+  token.json       : produced by auth.py (contains the refresh_token)
 
-出力: stdout に [{from, subject, date, snippet, link}] の JSON 配列。
-      取得に失敗したら {"error": "..."} を出して exit 1（呼び出し側は本文を続行できる）。
-スコープは gmail.readonly。既読化も削除もしない。
+Output: a JSON array of [{from, subject, date, snippet, link}] on stdout.
+On failure it prints {"error": "..."} and exits 1 (the caller can still continue).
+Scope is gmail.readonly: it never marks as read, replies, or deletes.
 """
 import json
 import os
@@ -18,7 +19,7 @@ from pathlib import Path
 
 
 def _load_env_file():
-    """~/.config/news/env (.env形式) を環境変数の不足分に流す（既存のenvが優先）。"""
+    """Feed ~/.config/news/env (.env style) into missing env vars (existing env wins)."""
     p = Path(os.environ.get("NEWS_ENV", Path.home() / ".config" / "news" / "env")).expanduser()
     if not p.exists():
         return
@@ -35,8 +36,8 @@ _load_env_file()
 CONFIG_DIR = Path(
     os.environ.get("GMAIL_CONFIG_DIR", str(Path.home() / ".config" / "news-gmail"))
 ).expanduser()
-# 要対応になりうる未読だけに絞る。プロモ/SNSは除外。
-# ノイズが多ければ -category:updates を足す。取りこぼすなら newer_than を伸ばす。
+# Narrow to unread that might need action; drop promotions/social.
+# Add -category:updates if it is too noisy; widen newer_than if it misses things.
 QUERY = os.environ.get("GMAIL_QUERY", "is:unread -category:promotions -category:social newer_than:14d")
 MAX_RESULTS = int(os.environ.get("GMAIL_MAX", "40"))
 TOKEN_URL = "https://oauth2.googleapis.com/token"
@@ -57,7 +58,7 @@ def _get(url, token):
 
 
 def _harden_perms():
-    """秘密ディレクトリ/ファイルのパーミッションを防御的に絞る（冪等）。"""
+    """Defensively tighten permissions on the secret dir/files (idempotent)."""
     try:
         CONFIG_DIR.chmod(0o700)
         for f in ("credentials.json", "token.json"):
@@ -71,7 +72,7 @@ def _harden_perms():
 def load_creds():
     _harden_perms()
     raw = json.loads((CONFIG_DIR / "credentials.json").read_text())
-    c = raw.get("installed") or raw.get("web") or raw  # Google DL形式({"installed":..})と素の形式の両対応
+    c = raw.get("installed") or raw.get("web") or raw  # accept Google's download form ({"installed":..}) and a flat form
     return {"client_id": c["client_id"], "client_secret": c["client_secret"]}
 
 
@@ -100,7 +101,7 @@ def fetch():
         h = {x["name"].lower(): x["value"] for x in msg.get("payload", {}).get("headers", [])}
         out.append({
             "from": h.get("from", ""),
-            "subject": h.get("subject", "(件名なし)"),
+            "subject": h.get("subject", "(no subject)"),
             "date": h.get("date", ""),
             "snippet": msg.get("snippet", ""),
             "link": f"https://mail.google.com/mail/u/0/#all/{m['id']}",
@@ -111,16 +112,16 @@ def fetch():
 def main():
     if "--check" in sys.argv:
         ok = (CONFIG_DIR / "credentials.json").exists() and (CONFIG_DIR / "token.json").exists()
-        print("OK" if ok else f"FAIL: 認証ファイルが無い ({CONFIG_DIR})")
+        print("OK" if ok else f"FAIL: credentials missing ({CONFIG_DIR})")
         sys.exit(0 if ok else 1)
     if os.environ.get("GMAIL_ENABLED", "0").strip().lower() not in ("1", "true", "yes", "on"):
-        print("[]")  # 機能オフ（既定）。使うなら ~/.config/news/env で GMAIL_ENABLED=1
+        print("[]")  # disabled (default). Set GMAIL_ENABLED=1 in ~/.config/news/env to use it.
         return
     try:
         json.dump(fetch(), sys.stdout, ensure_ascii=False, indent=2)
         print()
-    except Exception as e:  # noqa: BLE001 — 無人実行: クラッシュさせず error を返す
-        # 例外文字列にURL等が混じりうるので stdout には種別名だけ（Vaultに書かれる前提で最小化）。詳細は stderr。
+    except Exception as e:  # noqa: BLE001 — unattended: don't crash, return an error instead
+        # Exception text can leak a URL etc., so stdout gets only the type name (it ends up written to the digest). Details go to stderr.
         print(f"{type(e).__name__}: {e}", file=sys.stderr)
         json.dump({"error": type(e).__name__}, sys.stdout, ensure_ascii=False)
         print()
