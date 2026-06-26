@@ -1,3 +1,14 @@
 .DS_Store
 .serena/
 .claude/
+
+# Python
+__pycache__/
+*.pyc
+
+# 秘密情報は絶対に追跡しない（本来は ~/.config 配下に置く運用だが二重の保険）
+credentials.json
+token.json
+.env
+*-gmail/credentials.json
+*-gmail/token.json
