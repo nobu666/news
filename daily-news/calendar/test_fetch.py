@@ -119,6 +119,20 @@ class Window(unittest.TestCase):
             fetch.DAYS_AHEAD = saved
 
 
+class Truncate(unittest.TestCase):
+    def test_returns_short_strings_untouched(self):
+        self.assertEqual(fetch._truncate("hi", 200), "hi")
+
+    def test_handles_empty_and_none(self):
+        self.assertEqual(fetch._truncate(""), "")
+        self.assertEqual(fetch._truncate(None), "")
+
+    def test_caps_long_strings_with_ellipsis(self):
+        out = fetch._truncate("x" * 500, 10)
+        self.assertEqual(len(out), 10)
+        self.assertTrue(out.endswith("…"))
+
+
 class CalendarGate(unittest.TestCase):
     def test_disabled_outputs_empty_no_network(self):
         env = dict(os.environ, CALENDAR_ENABLED="0", NEWS_ENV=os.devnull)
