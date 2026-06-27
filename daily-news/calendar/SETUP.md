@@ -48,6 +48,20 @@ CALENDAR_ENABLED=1 python3 ~/repos/news/daily-news/calendar/fetch.py | head
 
 Then set `CALENDAR_ENABLED=1` in `~/.config/news/env` so the morning digest actually runs this.
 
+### Picking calendar IDs (TimeTree sync, secondary calendars, etc.)
+
+If your events sit in a calendar other than `primary` (e.g. **TimeTree sync** publishes a separate Google calendar; shared/family calendars are also separate), `primary` won't see them. List every calendar with its ID:
+
+```bash
+python3 ~/repos/news/daily-news/calendar/fetch.py --list-calendars
+```
+
+Output is one calendar per line, tab-separated: `<calendar id>\t<name> [primary]`. Paste the IDs you want into `CALENDAR_IDS` in `~/.config/news/env` (`;`-separated):
+
+```
+CALENDAR_IDS=primary;abc123@group.calendar.google.com
+```
+
 ## Notes
 
 - Scope is `calendar.readonly`. It never creates/edits/deletes events.

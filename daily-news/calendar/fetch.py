@@ -41,6 +41,7 @@ DAYS_AHEAD = int(os.environ.get("CALENDAR_DAYS_AHEAD", "1"))  # 1 = today + tomo
 MAX_RESULTS = int(os.environ.get("CALENDAR_MAX", "50"))
 TOKEN_URL = "https://oauth2.googleapis.com/token"
 API = "https://www.googleapis.com/calendar/v3/calendars"
+LIST_API = "https://www.googleapis.com/calendar/v3/users/me/calendarList"
 
 
 def _post(url, data):
@@ -127,11 +128,28 @@ def fetch():
     return out
 
 
+def list_calendars():
+    """Print all calendars the user can see, with their IDs — useful when setting CALENDAR_IDS."""
+    token = access_token()
+    listing = _get(LIST_API, token)
+    for c in listing.get("items", []):
+        summary = c.get("summaryOverride") or c.get("summary", "(no name)")
+        primary = " [primary]" if c.get("primary") else ""
+        print(f"{c.get('id', '')}\t{summary}{primary}")
+
+
 def main():
     if "--check" in sys.argv:
         ok = (CONFIG_DIR / "credentials.json").exists() and (CONFIG_DIR / "token.json").exists()
         print("OK" if ok else f"FAIL: credentials missing ({CONFIG_DIR})")
         sys.exit(0 if ok else 1)
+    if "--list-calendars" in sys.argv:
+        try:
+            list_calendars()
+        except Exception as e:  # noqa: BLE001
+            print(f"{type(e).__name__}: {e}", file=sys.stderr)
+            sys.exit(1)
+        return
     if os.environ.get("CALENDAR_ENABLED", "0").strip().lower() not in ("1", "true", "yes", "on"):
         print("[]")  # disabled (default). Set CALENDAR_ENABLED=1 in ~/.config/news/env to use it.
         return
