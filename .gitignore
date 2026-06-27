@@ -12,3 +12,5 @@ token.json
 .env
 *-gmail/credentials.json
 *-gmail/token.json
+*-gcal/credentials.json
+*-gcal/token.json
