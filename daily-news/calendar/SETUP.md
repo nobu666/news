@@ -3,17 +3,25 @@
 How to set up read-only Google Calendar access so the daily-news morning digest can add a "today's schedule" section.
 Standard library only (no dependencies). Credentials live **outside this repository**, in `~/.config/news-gcal/`.
 
-## 1. Create an OAuth client in Google Cloud
+## 1. Enable the Calendar API (and reuse the existing OAuth client if you have one)
 
-You can reuse the project you set up for Gmail. Just enable the Calendar API and create a separate Desktop OAuth client.
+In the [Google Cloud Console](https://console.cloud.google.com/), pick the project where your existing OAuth client lives, then "APIs & Services" → "Library" → enable the **Google Calendar API**. That alone is the only required step here — **OAuth Desktop clients are not API-scoped**, so the `claude-news` (or whatever name) client you already set up for Gmail can authorize Calendar too. You don't need a second OAuth client.
 
-1. In the [Google Cloud Console](https://console.cloud.google.com/), pick your project
-2. "APIs & Services" → "Library" → enable the **Google Calendar API**
-3. "Credentials" → "Create credentials" → "OAuth client ID" → **Application type: Desktop app**
-   - Desktop apps allow loopback (`http://127.0.0.1`) redirects; no redirect URI registration needed
-4. Note the **client ID** and **client secret**
+If you don't already have a Desktop client, create one now:
+
+- "Credentials" → "Create credentials" → "OAuth client ID" → **Application type: Desktop app** (loopback `http://127.0.0.1` redirects are allowed; no redirect URI registration needed)
 
 ## 2. Place the credentials file
+
+**Reuse the Gmail credentials** (simplest — recommended):
+
+```bash
+mkdir -p ~/.config/news-gcal
+cp ~/.config/news-gmail/credentials.json ~/.config/news-gcal/credentials.json
+chmod 600 ~/.config/news-gcal/credentials.json
+```
+
+Or, if you created a fresh client just for this:
 
 ```bash
 mkdir -p ~/.config/news-gcal
@@ -21,14 +29,7 @@ mv ~/Downloads/client_secret_*.json ~/.config/news-gcal/credentials.json
 chmod 600 ~/.config/news-gcal/credentials.json
 ```
 
-Or write a flat form:
-
-```bash
-cat > ~/.config/news-gcal/credentials.json <<'JSON'
-{ "client_id": "YOUR_CLIENT_ID", "client_secret": "YOUR_SECRET" }
-JSON
-chmod 600 ~/.config/news-gcal/credentials.json
-```
+`token.json` is **not** reusable — it's bound to its OAuth scope. The next step mints a Calendar-scoped one.
 
 ## 3. Consent once to mint a token
 
