@@ -1,6 +1,6 @@
 # news
 
-A set of Claude Code scheduled tasks that collect the latest news via web search, summarize it, and (optionally, in the morning) surface Gmail unread mail that "needs action".
+A set of Claude Code scheduled tasks that collect the latest news via web search, summarize it, and (optionally, in the morning) surface Gmail unread mail that "needs action" and today's Google Calendar schedule.
 
 **All personal settings — output paths, categories, language, your blog's character — live in `~/.config/news/env` (`.env` style, outside the repo).** Anyone who clones this just writes their own env. The task bodies (`SKILL.md`) contain no personal data.
 
@@ -12,6 +12,7 @@ A set of Claude Code scheduled tasks that collect the latest news via web search
 |---|---|---|---|---|
 | [`daily-news`](daily-news/SKILL.md) | core | twice a day | collect news for your configured categories | `$NEWS_DIR/YYYY-MM-DD-{morning,evening}.md` |
 | └ Gmail needs-action mail | optional | morning only | when `GMAIL_ENABLED=1`, extract action-needing unread mail | a section in the morning digest |
+| └ Google Calendar schedule | optional | morning only | when `CALENDAR_ENABLED=1`, list today's (and tomorrow's) events | a section in the morning digest |
 | [`blog-idea-scout`](blog-idea-scout/SKILL.md) | optional | weekly | suggest blog ideas from accumulated news x your notes | `$BLOG_IDEA_FILE` |
 
 daily-news **splits editions by run time** (before 12:00 -> morning, otherwise -> evening). Use one cron firing twice a day, e.g. `0 8,18 * * *`.
@@ -28,6 +29,7 @@ $EDITOR ~/.config/news/env   # edit for yourself (see table below)
 That alone gets news collection going. The add-ons are optional:
 - **Also use blog-idea-scout**: `./install.sh --with-blog-idea-scout`
 - **Also use Gmail needs-action mail**: set `GMAIL_ENABLED=1` in `~/.config/news/env` and see [`daily-news/gmail/SETUP.md`](daily-news/gmail/SETUP.md)
+- **Also use Google Calendar schedule**: set `CALENDAR_ENABLED=1` in `~/.config/news/env` and see [`daily-news/calendar/SETUP.md`](daily-news/calendar/SETUP.md)
 
 What `install.sh` does:
 - symlinks `daily-news` (and blog-idea-scout when `--with-blog-idea-scout` is given) `SKILL.md` into `~/.claude/scheduled-tasks/<task>/SKILL.md` (editing the repo is reflected on the next run)
@@ -52,6 +54,8 @@ Registering the cron itself is done separately via your app's scheduled-task fea
 | `VAULT_SEARCH` | (optional) path to a past-notes search command |
 | `GMAIL_ENABLED` | `1` enables morning needs-action mail (default `0`) |
 | `GMAIL_QUERY` / `GMAIL_MAX` | Gmail search query and max count for needs-action mail |
+| `CALENDAR_ENABLED` | `1` enables morning today's-schedule (default `0`) |
+| `CALENDAR_IDS` / `CALENDAR_DAYS_AHEAD` / `CALENDAR_MAX` | `;`-separated calendar IDs (default `primary`), days ahead beyond today (default `1`), max events |
 
 ## Gmail needs-action mail (optional)
 
@@ -63,6 +67,18 @@ To let `fetch.py` run unattended without a permission dialog, add this to `permi
 
 ```
 "Bash(python3 ~/repos/news/daily-news/gmail/fetch.py)"
+```
+
+## Google Calendar schedule (optional)
+
+When `CALENDAR_ENABLED=1`, the morning digest lists today's (and by default tomorrow's) Google Calendar events. It is **read-only** (`calendar.readonly`) — never creates, edits, or deletes events. It reads start/end, summary, location, and a Calendar link.
+
+Setup: see [`daily-news/calendar/SETUP.md`](daily-news/calendar/SETUP.md) (create a Calendar API OAuth client → consent once → save the token). Credentials live in `~/.config/news-gcal/` and **must never be committed**.
+
+Allowlist entry for unattended runs:
+
+```
+"Bash(python3 ~/repos/news/daily-news/calendar/fetch.py)"
 ```
 
 ## Security notes
