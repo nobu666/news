@@ -39,6 +39,8 @@ CONFIG_DIR = Path(
 CALENDAR_IDS = [c.strip() for c in os.environ.get("CALENDAR_IDS", "primary").split(";") if c.strip()]
 DAYS_AHEAD = int(os.environ.get("CALENDAR_DAYS_AHEAD", "1"))  # 1 = today + tomorrow
 MAX_RESULTS = int(os.environ.get("CALENDAR_MAX", "50"))
+# Cap each text field to keep one bloated event from swelling the digest.
+MAX_FIELD_LEN = int(os.environ.get("CALENDAR_MAX_FIELD_LEN", "200"))
 TOKEN_URL = "https://oauth2.googleapis.com/token"
 API = "https://www.googleapis.com/calendar/v3/calendars"
 LIST_API = "https://www.googleapis.com/calendar/v3/users/me/calendarList"
@@ -87,6 +89,14 @@ def access_token():
     return resp["access_token"]
 
 
+def _truncate(s, limit=None):
+    """Bound a free-form string from the API so one bloated event can't blow up the digest."""
+    if not s:
+        return ""
+    n = limit if limit is not None else MAX_FIELD_LEN
+    return s if len(s) <= n else s[: n - 1] + "…"  # ellipsis
+
+
 def _window():
     # Local-midnight today .. local-midnight (today + DAYS_AHEAD + 1).
     # Use the system's local tz (datetime.now().astimezone() resolves the offset).
@@ -119,8 +129,8 @@ def fetch():
                 "start": s.get("dateTime") or s.get("date") or "",
                 "end": t.get("dateTime") or t.get("date") or "",
                 "all_day": all_day,
-                "summary": e.get("summary", "(no title)"),
-                "location": e.get("location", ""),
+                "summary": _truncate(e.get("summary", "")) or "(no title)",
+                "location": _truncate(e.get("location", "")),
                 "link": e.get("htmlLink", ""),
                 "calendar": cal_id,
             })
