@@ -52,7 +52,7 @@ This task runs twice a day. **The run time decides the edition:**
 To avoid repeating past news, **read the recent editions before searching/writing and exclude already-covered items**:
 
 1. Use `date` to compute the filenames of the last 2 days (today/yesterday `YYYY-MM-DD-morning.md` / `-evening.md`, ~4 files; excluding the one you are about to write)
-2. Open each in `NEWS_DIR` with the Read tool (skip files that don't exist)
+2. Open each in `NEWS_DIR` with the Read tool (skip files that don't exist). **Never use Bash (`ls`, brace expansion like `{5,6,7}`, etc.) to check existence or list editions — unattended runs stall on a permission dialog. Just Read each computed filename; Read silently skips missing files.**
 3. Build an "already covered" list of article URLs and headline topics
 4. Exclude already-covered items from this run:
    - **Never include the same URL**
