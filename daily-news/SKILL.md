@@ -1,9 +1,12 @@
 ---
 name: daily-news
 description: Collect the latest news for configured categories and write a morning/evening Markdown digest (the morning one can optionally include Gmail "needs action" mail)
+model: claude-sonnet-4-6
 ---
 
 Collect the latest news for the configured categories via web search, summarize it, and save it as a Markdown file. Runs twice a day (morning/evening) and splits editions by run time.
+
+**Model preference: Sonnet (claude-sonnet-4-6).** This workload is collect → summarize → format Markdown — no deep reasoning required. Sonnet is plenty for it, and frontier-tier models (Opus etc.) have been hitting transient capacity errors during unattended runs, which knocks editions out entirely (see `recordedSkips` in scheduled-tasks.json). Sonnet pricing and throughput make this trade obvious.
 
 **All personal settings come from `~/.config/news/env` (`.env` style, outside the repo).** Anyone who clones this only has to edit their own env (template: [.env.example](../.env.example)). Always load the config at the start of the task.
 
