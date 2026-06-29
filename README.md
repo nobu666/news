@@ -15,7 +15,7 @@ A set of Claude Code scheduled tasks that collect the latest news via web search
 | └ Google Calendar schedule | optional | morning only | when `CALENDAR_ENABLED=1`, list today's (and tomorrow's) events | a section in the morning digest |
 | [`blog-idea-scout`](blog-idea-scout/SKILL.md) | optional | weekly | suggest blog ideas from accumulated news x your notes | `$BLOG_IDEA_FILE` |
 
-daily-news **splits editions by run time** (before 12:00 -> morning, otherwise -> evening). Use one cron firing twice a day, e.g. `0 8,18 * * *`.
+daily-news **splits editions by run time** (before 12:00 -> morning, otherwise -> evening). Use a cron that fires a few times per edition window — e.g. `0 8,9,10,18,19,20 * * *` (3 attempts each morning and evening). SKILL.md exits early if today's output already exists, so extra firings cost nothing and a transient API / WebSearch error gets a free retry an hour later.
 
 ## Quick start
 
