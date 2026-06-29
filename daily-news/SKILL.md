@@ -44,6 +44,16 @@ This task runs twice a day. **The run time decides the edition:**
 - Before 12:00 -> **morning**, 12:00 or later -> **evening**
 - The "edition", filename suffix, and heading follow this decision
 
+## Skip if today's edition is already written (idempotency guard)
+
+The recommended cron fires multiple times per edition (e.g. 8/9/10 and 18/19/20) so a transient API / WebSearch error gets a free retry an hour later. To avoid duplicate work and overwriting a good digest with a worse one:
+
+1. Compute the target output path: `$NEWS_DIR/YYYY-MM-DD-{morning|evening}.md` for today's date and the edition decided above.
+2. Try to **Read** that path. If Read returns any non-empty content, **stop immediately** — today's edition is already written by an earlier run. Do not regenerate, do not overwrite, do not run Gmail/Calendar fetches, do not search news.
+3. Only if Read says the file does not exist, continue with collection below.
+
+This guard is what makes "more cron firings = retries" safe.
+
 ## Collect
 
 - For each category in `NEWS_CATEGORIES`, gather the latest items via web search. If an item has a `: hint`, use it as the scope
