@@ -81,6 +81,37 @@ Allowlist entry for unattended runs:
 "Bash(python3 ~/repos/news/daily-news/calendar/fetch.py)"
 ```
 
+## Optional: stale-run cleanup (macOS launchd)
+
+scheduled-tasks has no built-in death watch, so a hung daily-news run leaves a `claude` process alive forever and burns the next firing's per-task retry budget. [`daily-news/cleanup-zombies.sh`](daily-news/cleanup-zombies.sh) kills any `--model claude-sonnet-4-6` claude process without `--resume` (i.e. a scheduled-task run, not your interactive sessions) that's been alive ≥3 hours. Idempotent, logs to `~/.cache/news/cleanup-zombies.log`.
+
+Run it on a 30-minute timer via launchd. Drop this at `~/Library/LaunchAgents/com.local.news-cleanup-zombies.plist` (replace `nobu666` with your username):
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.local.news-cleanup-zombies</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/Users/nobu666/repos/news/daily-news/cleanup-zombies.sh</string>
+  </array>
+  <key>StartInterval</key><integer>1800</integer>
+  <key>RunAtLoad</key><true/>
+</dict>
+</plist>
+```
+
+Then:
+
+```bash
+launchctl load ~/Library/LaunchAgents/com.local.news-cleanup-zombies.plist
+```
+
+To stop it: `launchctl unload …` and delete the plist.
+
 ## Security notes
 
 - **Scheduled tasks run unattended and autonomously.** If `install.sh`'s `git pull` changes upstream, the unattended agent's instructions (SKILL.md) change too. **Review the SKILL.md diff before the next unattended run.**
