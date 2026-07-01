@@ -21,7 +21,7 @@ This task reads, unattended, from **anyone-can-post public media** (Hacker News,
 
 ## Load config (do this first)
 
-Read `~/.config/news/env` and use these values (a leading `~` expands to home; fall back to the default if the file or a key is missing):
+**Use the Read tool** on `~/.config/news/env` and use these values (a leading `~` expands to home; fall back to the default if the file or a key is missing). Do NOT `cat` it via Bash and do NOT combine it with `date` in a single command (`date; cat env`, `date && cat env`, etc.) — unattended runs stall on the permission dialog whenever the exact command form isn't in the allowlist, and the model tends to invent fresh combinations that need fresh allowlist entries. Keep operations single-purpose: `date +%H` in Bash for the hour, `Read` for the env file.
 
 | Key | Default | Purpose |
 |---|---|---|
