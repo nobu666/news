@@ -48,6 +48,7 @@ Registering the cron itself is done separately via your app's scheduled-task fea
 | `WEATHER_LOCATION` | weather location; empty omits the weather section |
 | `NEWS_CATEGORIES` | categories, `;`-separated, each item may be `name: hint` |
 | `NEWS_SOURCES` | (optional) preferred sources, `;`-separated; empty = the agent picks |
+| `NEWS_RETENTION_DAYS` | (optional) days to keep digests; older ones deleted after each run (default `0` = keep forever) |
 | `BLOG_IDEA_FILE` | blog-idea-scout's suggestion output |
 | `BLOG_PROFILE` | your blog's character and what makes a good idea, in one line |
 | `BACKLOG_FILE` | (optional) existing idea backlog, used for dedup |
@@ -79,6 +80,16 @@ Allowlist entry for unattended runs:
 
 ```
 "Bash(python3 ~/repos/news/daily-news/calendar/fetch.py)"
+```
+
+## Digest retention (optional)
+
+When `NEWS_RETENTION_DAYS >= 1`, each run ends by running [`daily-news/prune.py`](daily-news/prune.py), which deletes `YYYY-MM-DD-{morning|evening}.md` files in `NEWS_DIR` older than the window (judged by the filename date, never mtime). It only ever touches files matching that exact name pattern, and it is best-effort — a prune failure never fails the digest.
+
+Allowlist entry for unattended runs:
+
+```
+"Bash(python3 ~/repos/news/daily-news/prune.py)"
 ```
 
 ## Optional: stale-run cleanup (macOS launchd)
