@@ -20,8 +20,10 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Syntax check (all scripts)
-        run: python -m py_compile daily-news/gmail/fetch.py daily-news/gmail/auth.py daily-news/calendar/fetch.py daily-news/calendar/auth.py
+        run: python -m py_compile daily-news/gmail/fetch.py daily-news/gmail/auth.py daily-news/calendar/fetch.py daily-news/calendar/auth.py daily-news/prune.py
       - name: Unit tests (gmail)
         run: python -m unittest discover -s daily-news/gmail -p 'test_*.py' -v
       - name: Unit tests (calendar)
         run: python -m unittest discover -s daily-news/calendar -p 'test_*.py' -v
+      - name: Unit tests (prune)
+        run: python -m unittest discover -s daily-news -p 'test_prune.py' -v

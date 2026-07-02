@@ -31,6 +31,7 @@ This task reads, unattended, from **anyone-can-post public media** (Hacker News,
 | `NEWS_CATEGORIES` | minimal set below | `;`-separated categories; each item may be `name: hint` |
 | `NEWS_SOURCES` | (empty) | `;`-separated preferred sources; if empty, pick reputable ones per category |
 | `GMAIL_ENABLED` | `0` | When `1`, add a "needs action" mail section to the morning digest |
+| `NEWS_RETENTION_DAYS` | `0` (disabled) | When `>= 1`, delete digests older than this many days after writing today's edition |
 
 Minimal `NEWS_CATEGORIES` (when unset): `AI/ML; Software engineering; World news`.
 `GMAIL_QUERY` / `GMAIL_MAX` are read by `fetch.py` from the same file, so they are not handled here.
@@ -146,6 +147,14 @@ If a post/thread is notably going around on X etc., note the author, a summary, 
 
 Pick the single most important/interesting item above and explain its background and why it's worth attention in 4-6 lines.
 ```
+
+## Prune old editions (last step, only when `NEWS_RETENTION_DAYS` >= 1)
+
+After the digest is written, run the command **as-is** (no pipes, redirects, or extra arguments; needs an allowlist in settings — see README):
+   `python3 ~/repos/news/daily-news/prune.py`
+   (if you cloned the repo elsewhere, adjust the path)
+
+It reads `NEWS_DIR` / `NEWS_RETENTION_DAYS` from the env file itself and deletes only `YYYY-MM-DD-{morning|evening}.md` files older than the retention window, judged by the filename date. Output is a JSON summary; on `{"error": ...}` or failure, ignore it — pruning is best-effort and must never fail the digest. When `NEWS_RETENTION_DAYS` is unset or `0`, skip this step entirely (do not run the command).
 
 ## Notes
 
