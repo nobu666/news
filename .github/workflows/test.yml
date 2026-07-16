@@ -27,3 +27,17 @@ jobs:
         run: python -m unittest discover -s daily-news/calendar -p 'test_*.py' -v
       - name: Unit tests (prune)
         run: python -m unittest discover -s daily-news -p 'test_prune.py' -v
+
+  commitlint:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PR title follows Conventional Commits
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          PATTERN='^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?!?: .+'
+          if ! echo "$TITLE" | grep -qE "$PATTERN"; then
+            echo "::error::PR title must follow Conventional Commits (type(scope): description): $TITLE"
+            exit 1
+          fi
