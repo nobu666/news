@@ -22,7 +22,7 @@ daily-news **splits editions by run time** (before 12:00 -> morning, otherwise -
 ```bash
 git clone https://github.com/nobu666/news.git ~/repos/news
 cd ~/repos/news
-./install.sh                 # symlinks daily-news (news) + seeds ~/.config/news/env from the template
+./install.sh                 # copies daily-news (news) + seeds ~/.config/news/env from the template
 $EDITOR ~/.config/news/env   # edit for yourself (see table below)
 ```
 
@@ -32,10 +32,10 @@ That alone gets news collection going. The add-ons are optional:
 - **Also use Google Calendar schedule**: set `CALENDAR_ENABLED=1` in `~/.config/news/env` and see [`daily-news/calendar/SETUP.md`](daily-news/calendar/SETUP.md)
 
 What `install.sh` does:
-- symlinks `daily-news` (and blog-idea-scout when `--with-blog-idea-scout` is given) `SKILL.md` into `~/.claude/scheduled-tasks/<task>/SKILL.md` (editing the repo is reflected on the next run)
+- copies `daily-news` (and blog-idea-scout when `--with-blog-idea-scout` is given) `SKILL.md` into `~/.claude/scheduled-tasks/<task>/SKILL.md` (the Claude desktop app refuses symlinked task files, so re-run `./install.sh` after editing the repo)
 - copies [`.env.example`](.env.example) to `~/.config/news/env` if missing
 
-Registering the cron itself is done separately via your app's scheduled-task feature (this script only symlinks and seeds the config).
+Registering the cron itself is done separately via your app's scheduled-task feature (this script only copies the task files and seeds the config).
 
 ## Config (`~/.config/news/env`)
 

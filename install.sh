@@ -34,14 +34,17 @@ fi
 TASKS="daily-news"
 [ "$WITH_SCOUT" = 1 ] && TASKS="$TASKS blog-idea-scout"
 
-# Symlinks (editing the repo is reflected on the next run)
+# Copies. The Claude desktop app refuses symlinked task files since 2026-09
+# ("symlink detected before open; refusing to open"), so re-run this script after editing the repo.
 echo ""
-echo "--- Symlinks ---"
+echo "--- Task files ---"
 mkdir -p "$TASKS_DIR"
 for task in $TASKS; do
   mkdir -p "$TASKS_DIR/$task"
-  ln -sf "$REPO_DIR/$task/SKILL.md" "$TASKS_DIR/$task/SKILL.md"
-  echo "  $TASKS_DIR/$task/SKILL.md -> $REPO_DIR/$task/SKILL.md"
+  # rm first: cp onto a leftover symlink would follow it and clobber the repo file
+  rm -f "$TASKS_DIR/$task/SKILL.md"
+  cp "$REPO_DIR/$task/SKILL.md" "$TASKS_DIR/$task/SKILL.md"
+  echo "  $REPO_DIR/$task/SKILL.md -> $TASKS_DIR/$task/SKILL.md"
 done
 [ "$WITH_SCOUT" = 0 ] && echo "  (blog-idea-scout not installed. To add it: ./install.sh --with-blog-idea-scout)"
 
@@ -62,6 +65,6 @@ echo "=== Done ==="
 echo "- daily-news: runs twice a day (morning/evening). Splits editions by run time. cron e.g. 0 8,18 * * *"
 [ "$WITH_SCOUT" = 1 ] && echo "- blog-idea-scout: weekly. Suggests blog ideas from accumulated news. cron e.g. 0 19 * * 0"
 echo "Edit $NEWS_CONFIG_DIR/env to configure. For Gmail mail, set GMAIL_ENABLED=1 and see daily-news/gmail/SETUP.md."
-echo "Editing the repo's SKILL.md is reflected directly on the next run."
+echo "After editing the repo's SKILL.md, re-run ./install.sh to copy it into place."
 echo ""
-echo "Note: registering the cron itself is done separately via your app's scheduled-task feature (this script only symlinks)."
+echo "Note: registering the cron itself is done separately via your app's scheduled-task feature (this script only copies the task files)."
