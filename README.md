@@ -14,6 +14,7 @@ A set of Claude Code scheduled tasks that collect the latest news via web search
 | └ Gmail needs-action mail | optional | morning only | when `GMAIL_ENABLED=1`, extract action-needing unread mail | a section in the morning digest |
 | └ Google Calendar schedule | optional | morning only | when `CALENDAR_ENABLED=1`, list today's (and tomorrow's) events | a section in the morning digest |
 | [`blog-idea-scout`](blog-idea-scout/SKILL.md) | optional | weekly | suggest blog ideas from accumulated news x your notes | `$BLOG_IDEA_FILE` |
+| [`oss-seed-scout`](oss-seed-scout/SKILL.md) | optional | weekly | mine Reddit / HN (incl. Ask & Show HN) / Lobste.rs / Hatena / GitHub / Hugging Face for OSS seeds that fit your builder profile | `$OSS_SEED_FILE` |
 
 daily-news **splits editions by run time** (before 15:00 -> morning, otherwise -> evening). Use a cron that fires a few times per edition window — e.g. `0 8,9,10,18,19,20 * * *` (3 attempts each morning and evening). SKILL.md exits early if today's output already exists, so extra firings cost nothing and a transient API / WebSearch error gets a free retry an hour later.
 
@@ -28,6 +29,7 @@ $EDITOR ~/.config/news/env   # edit for yourself (see table below)
 
 That alone gets news collection going. The add-ons are optional:
 - **Also use blog-idea-scout**: `./install.sh --with-blog-idea-scout`
+- **Also use oss-seed-scout**: `./install.sh --with-oss-seed-scout` (see [OSS seed scout](#oss-seed-scout-optional) below)
 - **Also use Gmail needs-action mail**: set `GMAIL_ENABLED=1` in `~/.config/news/env` and see [`daily-news/gmail/SETUP.md`](daily-news/gmail/SETUP.md)
 - **Also use Google Calendar schedule**: set `CALENDAR_ENABLED=1` in `~/.config/news/env` and see [`daily-news/calendar/SETUP.md`](daily-news/calendar/SETUP.md)
 
@@ -80,6 +82,18 @@ Allowlist entry for unattended runs:
 
 ```
 "Bash(python3 ~/repos/news/daily-news/calendar/fetch.py)"
+```
+
+## OSS seed scout (optional)
+
+daily-news tells you what happened. oss-seed-scout looks for **what you could build**: [`oss-seed-scout/fetch.py`](oss-seed-scout/fetch.py) pulls each `SCOUT_SUBREDDITS` weekly top list (Reddit Atom feed; the JSON endpoints answer 403 to scripts), Hacker News top stories plus **Ask HN** (needs and pains) and **Show HN** (what people already build), the most-starred repos created in the last 7 days with their open-issue counts (GitHub search API), Lobste.rs hottest, Hatena Bookmark's IT hot entries (Japanese) and Hugging Face trending models — standard library only, no keys. The task then hunts for unmet needs, judges each one against `OSS_PROFILE` (what you build and how you choose), drops what duplicates `OSS_EXISTING_REPOS` or earlier seeds, and appends **0-3 seeds** to `OSS_SEED_FILE` — each with the pain, the evidence URLs, what already exists, why it fits you, the smallest first version and the risk. "Nothing this week." is a normal result. Suggested cron: `0 10,11 * * 6` (the second firing is a free retry; the task exits early once this week's section exists).
+
+Everything the script returns is public, anyone-can-post text; the task treats it as data and never opens URLs from it.
+
+Allowlist entry for unattended runs:
+
+```
+"Bash(python3 ~/repos/news/oss-seed-scout/fetch.py)"
 ```
 
 ## Digest retention (optional)
