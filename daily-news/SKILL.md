@@ -43,7 +43,7 @@ Write everything (summaries, headings, the "one line" notes) in `OUTPUT_LANGUAGE
 
 This task runs twice a day. **The run time decides the edition:**
 - Get the current hour with `date +%H`
-- Before 12:00 -> **morning**, 12:00 or later -> **evening**
+- Before 15:00 -> **morning**, 15:00 or later -> **evening**
 - The "edition", filename suffix, and heading follow this decision
 
 ## Skip if today's edition is already written (idempotency guard)
