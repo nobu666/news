@@ -3,15 +3,18 @@ set -e
 
 # By default this installs only daily-news (news collection).
 # blog-idea-scout (personal blog idea suggestions) is opt-in: ./install.sh --with-blog-idea-scout
+# oss-seed-scout (OSS seeds from Reddit/HN/GitHub etc.) is opt-in: ./install.sh --with-oss-seed-scout
 # Gmail "needs action" mail is enabled via GMAIL_ENABLED=1 in ~/.config/news/env (see SETUP.md).
 
 REPO_DIR="${INSTALL_DIR:-$HOME/repos}/news"
 TASKS_DIR="$HOME/.claude/scheduled-tasks"
 
 WITH_SCOUT=0
+WITH_OSS=0
 for arg in "$@"; do
   case "$arg" in
     --with-blog-idea-scout) WITH_SCOUT=1 ;;
+    --with-oss-seed-scout) WITH_OSS=1 ;;
     *) echo "Unknown argument: $arg" >&2; exit 1 ;;
   esac
 done
@@ -33,6 +36,7 @@ fi
 # What to install
 TASKS="daily-news"
 [ "$WITH_SCOUT" = 1 ] && TASKS="$TASKS blog-idea-scout"
+[ "$WITH_OSS" = 1 ] && TASKS="$TASKS oss-seed-scout"
 
 # Copies. The Claude desktop app refuses symlinked task files since 2026-09
 # ("symlink detected before open; refusing to open"), so re-run this script after editing the repo.
@@ -47,6 +51,7 @@ for task in $TASKS; do
   echo "  $REPO_DIR/$task/SKILL.md -> $TASKS_DIR/$task/SKILL.md"
 done
 [ "$WITH_SCOUT" = 0 ] && echo "  (blog-idea-scout not installed. To add it: ./install.sh --with-blog-idea-scout)"
+[ "$WITH_OSS" = 0 ] && echo "  (oss-seed-scout not installed. To add it: ./install.sh --with-oss-seed-scout)"
 
 # Config file (change output paths etc. here. Seeded from the template if missing)
 echo ""
@@ -64,6 +69,7 @@ echo ""
 echo "=== Done ==="
 echo "- daily-news: runs twice a day (morning/evening). Splits editions by run time. cron e.g. 0 8,18 * * *"
 [ "$WITH_SCOUT" = 1 ] && echo "- blog-idea-scout: weekly. Suggests blog ideas from accumulated news. cron e.g. 0 19 * * 0"
+[ "$WITH_OSS" = 1 ] && echo "- oss-seed-scout: weekly. Mines Reddit/HN/GitHub/Lobste.rs/Hatena/Hugging Face for OSS seeds that fit your profile. cron e.g. 0 10,11 * * 6 (needs an allowlist entry — see README)"
 echo "Edit $NEWS_CONFIG_DIR/env to configure. For Gmail mail, set GMAIL_ENABLED=1 and see daily-news/gmail/SETUP.md."
 echo "After editing the repo's SKILL.md, re-run ./install.sh to copy it into place."
 echo ""
