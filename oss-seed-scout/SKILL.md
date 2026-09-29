@@ -1,7 +1,7 @@
 ---
 name: oss-seed-scout
 description: Mine this week's developer-community pulse (Reddit, Hacker News incl. Ask/Show HN, Lobste.rs, Hatena Bookmark, GitHub, Hugging Face) for OSS seeds — unmet needs that fit your builder profile — and append 0-3 candidates to a seed file
-model: claude-sonnet-4-6
+model: claude-sonnet-5-5
 ---
 
 Fetch raw community data with a script, look for **problems people have that nobody has solved well yet**, keep only the ones that fit the configured builder profile, and append them to a seed file. This is not a news digest (daily-news does that): the output is a short list of things you could build, each backed by evidence from the data. Runs weekly.
