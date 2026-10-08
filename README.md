@@ -108,7 +108,7 @@ Allowlist entry for unattended runs:
 
 ## Optional: stale-run cleanup (macOS launchd)
 
-scheduled-tasks has no built-in death watch, so a hung daily-news run leaves a `claude` process alive forever and burns the next firing's per-task retry budget. [`daily-news/cleanup-zombies.sh`](daily-news/cleanup-zombies.sh) kills any `--model claude-sonnet-5-5` claude process without `--resume` (i.e. a scheduled-task run, not your interactive sessions) that's been alive ≥3 hours. Idempotent, logs to `~/.cache/news/cleanup-zombies.log`.
+scheduled-tasks has no built-in death watch, so a hung daily-news run leaves a `claude` process alive forever and burns the next firing's per-task retry budget. [`daily-news/cleanup-zombies.sh`](daily-news/cleanup-zombies.sh) kills any `--model claude-haiku-5-5` claude process without `--resume` (i.e. a scheduled-task run, not your interactive sessions) that's been alive ≥3 hours. Idempotent, logs to `~/.cache/news/cleanup-zombies.log`.
 
 Run it on a 30-minute timer via launchd. Drop this at `~/Library/LaunchAgents/com.local.news-cleanup-zombies.plist` (replace `nobu666` with your username):
 

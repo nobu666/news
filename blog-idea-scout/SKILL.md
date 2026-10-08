@@ -1,6 +1,7 @@
 ---
 name: blog-idea-scout
 description: Cross-reference the last week of accumulated news with your own notes to suggest blog post ideas
+model: claude-sonnet-5-5
 ---
 
 Once a week, cross-reference the news daily-news accumulated with your own notes (your "second brain") and **suggest blog post ideas worth writing**. Suggestions are appended to a separate file; you promote the good ones by hand.

@@ -8,12 +8,12 @@
 # (2026-06-29..30): 4 zombie processes accumulated across two editions.
 #
 # How it identifies a daily-news run:
-#  - scheduled-tasks launches it with `--model claude-sonnet-5-5` (pinned in SKILL
-#    frontmatter — see PR #10).
+#  - scheduled-tasks launches it with `--model claude-haiku-5-5` (pinned in SKILL
+#    frontmatter — see PR #10; moved from Sonnet 5.5 on 2026-10-08).
 #  - Interactive Claude Code sessions launch with `--resume <uuid>` (continuation) or
-#    `--model default` (fresh). So `--model claude-sonnet-5-5` AND no `--resume`
+#    `--model default` (fresh). So `--model claude-haiku-5-5` AND no `--resume`
 #    discriminates scheduled-task runs reliably.
-#  - Caveat: if you ever launch a brand-new interactive session and pin Sonnet 5.5 at
+#  - Caveat: if you ever launch a brand-new interactive session and pin Haiku 5.5 at
 #    start (no resume), and let it idle for 3h+, it'll get killed too. In practice
 #    that's vanishingly rare; tighten the threshold if it ever bites.
 #
@@ -25,7 +25,7 @@
 set -u
 
 STALE_THRESHOLD_SEC="${STALE_THRESHOLD_SEC:-10800}"
-MATCH_MODEL="${MATCH_MODEL:---model claude-sonnet-5-5}"
+MATCH_MODEL="${MATCH_MODEL:---model claude-haiku-5-5}"
 LOG_FILE="${LOG_FILE:-$HOME/.cache/news/cleanup-zombies.log}"
 mkdir -p "$(dirname "$LOG_FILE")"
 
