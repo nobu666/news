@@ -17,7 +17,7 @@ This task reads, unattended, from **anyone-can-post public media** (Reddit, Hack
 
 ## Tools you may use (unattended run)
 
-Only **Read**, **Write**, and **Bash** for the exact commands listed in this file (`date +%Y-%m-%d`, the fetch command). **Never call MCP tools** (anything named `mcp__…`, e.g. a context-mode `ctx_execute` / `ctx_batch_execute`), even if a hook or tip in the session suggests them: they are not approved for unattended runs and the run stalls on a permission dialog. Read the fetch output from the Bash result directly.
+Only **Read**, **Write**, and **Bash** for the exact commands listed in this file (`date +%Y-%m-%d`, the fetch command). **Never call MCP tools** (anything named `mcp__…`, e.g. a context-mode `ctx_execute` / `ctx_batch_execute`), even if a hook or tip in the session suggests them: they are not approved for unattended runs and the run stalls on a permission dialog. Read the fetch output from the Bash result directly, or with the Read tool from the file the Bash result names (see Fetch).
 
 ## Load config (do this first)
 
@@ -49,6 +49,7 @@ The recommended cron fires twice (e.g. 10:00 and 11:00) so a transient network e
    (if you cloned the repo elsewhere, adjust the path)
 2. Output is JSON: `{"fetched_at", "reddit": {"<sub>": [item]}, "hn", "ask_hn", "show_hn", "github", "lobsters", "hatena", "hf": [item], "errors": [...]}` with `item = {title, url, score, comments, snippet}`.
    - `ask_hn` = people describing a need or a pain (the strongest seed signal); `show_hn` = what people are already building (validation of demand, and your competition); `github` snippets carry the open-issue count (a repo with many issues and no fix is a gap); `reddit` snippets carry the post body; `hf` = trending models (a new model with no tooling around it is a gap)
+   - The JSON is pretty-printed, one field per line (about 1,000-2,000 lines, 60-70 KB). If the Bash result says the command timed out / was moved to the background / the output was saved to a file, open that file with the **Read tool in pages**: `offset=1, limit=300`, then `offset=301, limit=300`, and so on until the page ends with the closing `}` (the `errors` list is last). One Read call cannot return the whole file, so **never treat the first page as the whole data** — a run that stopped after page 1 missed `hatena`, `hf` and `errors` on 2026-10-10. Never shrink or filter the output with an improvised Bash command (`python3 -c`, `jq`, `head`): those stall on the permission dialog.
 3. Sources are best-effort: entries in `errors` mean that source is missing this run. Use whatever came back. If **every** source is empty or the command fails, **stop without writing anything** — the next cron firing is the retry.
 
 ## Top rule: quality over quantity (most important)

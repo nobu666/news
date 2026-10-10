@@ -280,7 +280,7 @@ def main():
         except Exception as e:
             result["errors"].append(f"{name}: {clip(e, 200)}")
 
-    json.dump(result, sys.stdout, ensure_ascii=False)
+    json.dump(result, sys.stdout, ensure_ascii=False, indent=1)  # one field per line: the Read tool pages by line and cuts a single huge line
     print()
 
 
